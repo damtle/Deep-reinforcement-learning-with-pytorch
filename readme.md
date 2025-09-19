@@ -9,62 +9,45 @@ In the future, more state-of-the-art algorithms will be added and the existing c
 ## Requirements
 - python <=3.6 
 - tensorboardX
-- gym >= 0.10
-- pytorch >= 0.4
+- gymnasium >= 0.29
+- pytorch >= 2.0
 
-**Note that tensorflow does not support python3.7** 
+## Unified training framework (Python 3.10 + Gymnasium)
 
-## Installation
+The repository now ships with a modular training framework that unifies the algorithms included in the book chapters under a
+single configuration-driven entry point.  Common utilities such as replay buffers, rollout storage and training loops live in
+`rl_framework/` and can be shared across value-based and policy-based agents.  Switching the algorithm or the environment is as
+simple as selecting another YAML configuration file.
 
-```
+### Installation
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-If you fail:  
-
-- Install gym
-
-```
-pip install gym
-```
-
-
-
-- Install the pytorch
-```bash
-please go to official webisite to install it: https://pytorch.org/
-
-Recommend use Anaconda Virtual Environment to manage your packages
-
-```
-
-- Install tensorboardX
-```bash
-pip install tensorboardX
-pip install tensorflow==1.12
-```
-
-- Test 
-```
-cd Char10\ TD3/
-python TD3_BipedalWalker-v2.py --mode test
-```
-
-You could see a bipedalwalker if you install successfully.
-
-BipedalWalker: 
-
-![](https://github.com/sweetice/Deep-reinforcement-learning-with-pytorch/blob/master/figures/test.png)
-
-- 4. install openai-baselines (**Optional**)
+### Running an experiment
 
 ```bash
-# clone the openai baselines
-git clone https://github.com/openai/baselines.git
-cd baselines
-pip install -e .
+# Deep Q-Network on CartPole-v1
+python train.py --config configs/dqn_cartpole.yaml --total-episodes 10
 
+# Proximal Policy Optimisation on CartPole-v1
+python train.py --config configs/ppo_cartpole.yaml --total-episodes 10
 ```
+
+Each configuration file contains three sections:
+
+- `environment`: the Gymnasium environment id, optional arguments and episode horizon.
+- `algorithm`: the agent name (`dqn`, `ppo`, …) together with its hyper-parameters.
+- `training`: generic trainer options such as number of episodes, evaluation cadence, logging frequency and target device.
+
+Algorithms dynamically adapt to the environment spaces.  DQN builds multilayer perceptrons for discrete action spaces and uses a
+shared replay buffer implementation.  PPO relies on the on-policy rollout buffer and supports both discrete and continuous
+action spaces.  The framework is fully compatible with Python 3.10 and the latest Gymnasium API (returning `(observation,
+info)` from `reset` and `(observation, reward, terminated, truncated, info)` from `step`).
 
 ## DQN
 
