@@ -1,0 +1,27 @@
+environment:
+  id: CartPole-v1
+  max_episode_steps: 500
+algorithm:
+  name: dqn
+  params:
+    hidden_sizes: [128, 128]
+    gamma: 0.99
+    lr: 0.0005
+    buffer_size: 50000
+    batch_size: 64
+    target_update_interval: 500
+    train_frequency: 1
+    min_replay_size: 1000
+    gradient_steps: 1
+    epsilon:
+      start: 1.0
+      end: 0.05
+      decay_steps: 10000
+training:
+  total_episodes: 400
+  max_steps_per_episode: 500
+  seed: 42
+  eval_interval: 50
+  evaluation_episodes: 5
+  log_interval: 10
+  device: cpu
