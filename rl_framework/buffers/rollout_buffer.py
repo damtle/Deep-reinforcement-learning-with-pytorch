@@ -1,7 +1,7 @@
 """Rollout buffer for on-policy algorithms such as PPO."""
 from __future__ import annotations
 
-from typing import Dict, Tuple
+from typing import Callable, Dict, Tuple
 
 import numpy as np
 import torch
@@ -57,7 +57,7 @@ class RolloutBuffer:
 
     def compute_returns_and_advantages(
         self,
-        value_fn: torch.nn.Module,
+        value_fn: Callable[[torch.Tensor], torch.Tensor],
         device: torch.device,
         gamma: float,
         gae_lambda: float,
