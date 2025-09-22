@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from rl_framework.algorithms.base import BaseAgent
 from rl_framework.buffers.rollout_buffer import RolloutBuffer
 from rl_framework.networks.actor_critic import ActorCriticPolicy
-from rl_framework.types import Transition
+from rl_framework.types import Transition, infer_action_spec, infer_observation_spec
 
 
 class A2CAgent(BaseAgent):
@@ -24,6 +24,8 @@ class A2CAgent(BaseAgent):
             raise TypeError("A2C requires Box observation spaces.")
 
         self.device = torch.device(device)
+        self.observation_spec = infer_observation_spec(observation_space)
+        self.action_spec = infer_action_spec(action_space)
         hidden_sizes = tuple(config.get("hidden_sizes", (128, 128)))
         self.policy = ActorCriticPolicy(observation_space, action_space, hidden_sizes).to(self.device)
         self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=config.get("lr", 7e-4))
@@ -35,12 +37,11 @@ class A2CAgent(BaseAgent):
         self.entropy_coef = float(config.get("entropy_coef", 0.01))
         self.max_grad_norm = config.get("max_grad_norm", 0.5)
 
-        action_shape = action_space.shape if isinstance(action_space, gym.spaces.Box) else (1,)
-        self.discrete_action = isinstance(action_space, gym.spaces.Discrete)
+        self.discrete_action = self.action_spec.discrete
         self.rollout_buffer = RolloutBuffer(
             capacity=self.n_steps,
-            observation_shape=tuple(observation_space.shape),
-            action_shape=action_shape,
+            observation_shape=self.observation_spec.shape,
+            action_shape=self.action_spec.shape,
             discrete_action=self.discrete_action,
         )
 
@@ -91,9 +92,20 @@ class A2CAgent(BaseAgent):
             raise RuntimeError("`select_action` must be called before `observe`.")
 
         done = bool(transition.done)
+        if isinstance(self._last_action, torch.Tensor):
+            action_array = self._last_action.detach().cpu().numpy()
+        else:
+            dtype = np.int64 if self.discrete_action else np.float32
+            action_array = np.asarray(self._last_action, dtype=dtype)
+        if self.discrete_action:
+            action_array = action_array.astype(np.int64, copy=False)
+        else:
+            action_array = action_array.astype(np.float32, copy=False)
+        action_array = action_array.reshape(self.action_spec.shape)
+
         self.rollout_buffer.add(
             observation=self._last_observation,
-            action=self._last_action.cpu().numpy() if isinstance(self._last_action, torch.Tensor) else self._last_action,
+            action=action_array,
             log_prob=float(self._last_log_prob.cpu().item()),
             value=float(self._last_value.cpu().item()),
             reward=float(transition.reward),

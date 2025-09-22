@@ -12,15 +12,7 @@ from torch.nn import functional as F
 from rl_framework.algorithms.base import BaseAgent
 from rl_framework.buffers.rollout_buffer import RolloutBuffer
 from rl_framework.networks.actor_critic import ActorCriticPolicy
-from rl_framework.types import Transition
-
-
-def _infer_dims(space: gym.Space) -> Tuple[int, Tuple[int, ...], bool]:
-    if isinstance(space, gym.spaces.Box):
-        return int(np.prod(space.shape)), tuple(space.shape), False
-    if isinstance(space, gym.spaces.Discrete):
-        return space.n, (1,), True
-    raise ValueError("Unsupported space type for PPO agent.")
+from rl_framework.types import Transition, infer_action_spec, infer_observation_spec
 
 
 class PPOAgent(BaseAgent):
@@ -30,9 +22,9 @@ class PPOAgent(BaseAgent):
         super().__init__(observation_space, action_space, config, device)
         self.device = torch.device(device)
 
-        observation_dim = int(np.prod(observation_space.shape))
-        _, action_shape, discrete_action = _infer_dims(action_space)
-        self.discrete_action = discrete_action
+        self.observation_spec = infer_observation_spec(observation_space)
+        self.action_spec = infer_action_spec(action_space)
+        self.discrete_action = self.action_spec.discrete
         hidden_sizes = tuple(config.get("hidden_sizes", (64, 64)))
 
         self.policy = ActorCriticPolicy(observation_space, action_space, hidden_sizes).to(self.device)
@@ -41,9 +33,9 @@ class PPOAgent(BaseAgent):
         rollout_length = config.get("rollout_length", 2048)
         self.rollout_buffer = RolloutBuffer(
             capacity=rollout_length,
-            observation_shape=tuple(observation_space.shape),
-            action_shape=action_shape,
-            discrete_action=discrete_action,
+            observation_shape=self.observation_spec.shape,
+            action_shape=self.action_spec.shape,
+            discrete_action=self.discrete_action,
         )
 
         self.gamma = config.get("gamma", 0.99)
@@ -99,9 +91,20 @@ class PPOAgent(BaseAgent):
             raise RuntimeError("`select_action` must be called before `observe`.")
         done = transition.terminated
         episode_finished = transition.done
+        if isinstance(self._last_action, torch.Tensor):
+            action_array = self._last_action.detach().cpu().numpy()
+        else:
+            dtype = np.int64 if self.discrete_action else np.float32
+            action_array = np.asarray(self._last_action, dtype=dtype)
+        if self.discrete_action:
+            action_array = action_array.astype(np.int64, copy=False)
+        else:
+            action_array = action_array.astype(np.float32, copy=False)
+        action_array = action_array.reshape(self.action_spec.shape)
+
         self.rollout_buffer.add(
             observation=self._last_observation,
-            action=self._last_action.cpu().numpy() if isinstance(self._last_action, torch.Tensor) else self._last_action,
+            action=action_array,
             log_prob=float(self._last_log_prob.cpu().item()),
             value=float(self._last_value.cpu().item()),
             reward=float(transition.reward),
