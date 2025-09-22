@@ -34,6 +34,21 @@ pip install -r requirements.txt
 # Deep Q-Network on CartPole-v1
 python train.py --config configs/dqn_cartpole.yaml --total-episodes 10
 
+# REINFORCE / Policy Gradient on CartPole-v1
+python train.py --config configs/pg_cartpole.yaml --total-episodes 10
+
+# Advantage Actor-Critic variants
+python train.py --config configs/actor_critic_cartpole.yaml --total-episodes 10
+python train.py --config configs/a2c_cartpole.yaml --total-episodes 10
+
+# Off-policy continuous-control algorithms
+python train.py --config configs/ddpg_pendulum.yaml --total-episodes 5
+python train.py --config configs/sac_pendulum.yaml --total-episodes 5
+python train.py --config configs/td3_pendulum.yaml --total-episodes 5
+
+# ACER on CartPole-v1
+python train.py --config configs/acer_cartpole.yaml --total-episodes 10
+
 # Proximal Policy Optimisation on CartPole-v1
 python train.py --config configs/ppo_cartpole.yaml --total-episodes 10
 ```
@@ -44,10 +59,22 @@ Each configuration file contains three sections:
 - `algorithm`: the agent name (`dqn`, `ppo`, …) together with its hyper-parameters.
 - `training`: generic trainer options such as number of episodes, evaluation cadence, logging frequency and target device.
 
-Algorithms dynamically adapt to the environment spaces.  DQN builds multilayer perceptrons for discrete action spaces and uses a
-shared replay buffer implementation.  PPO relies on the on-policy rollout buffer and supports both discrete and continuous
-action spaces.  The framework is fully compatible with Python 3.10 and the latest Gymnasium API (returning `(observation,
-info)` from `reset` and `(observation, reward, terminated, truncated, info)` from `step`).
+Algorithms dynamically adapt to the environment spaces.  Replay-based agents such as DQN, DDPG, SAC and TD3 share the same
+high-performance buffer implementation, while policy gradient families (Policy Gradient, Actor-Critic, A2C, ACER, PPO) reuse the
+rollout utilities and actor-critic networks.  The framework is fully compatible with Python 3.10 and the latest Gymnasium API
+(returning `(observation, info)` from `reset` and `(observation, reward, terminated, truncated, info)` from `step`).
+
+Supported algorithms and example configuration files:
+
+- `dqn` – `configs/dqn_cartpole.yaml`
+- `policy_gradient` – `configs/pg_cartpole.yaml`
+- `actor_critic` – `configs/actor_critic_cartpole.yaml`
+- `a2c` – `configs/a2c_cartpole.yaml`
+- `ddpg` – `configs/ddpg_pendulum.yaml`
+- `ppo` – `configs/ppo_cartpole.yaml`
+- `acer` – `configs/acer_cartpole.yaml`
+- `sac` – `configs/sac_pendulum.yaml`
+- `td3` – `configs/td3_pendulum.yaml`
 
 ## DQN
 

@@ -1,0 +1,20 @@
+environment:
+  id: CartPole-v1
+  max_episode_steps: 500
+algorithm:
+  name: actor_critic
+  params:
+    hidden_sizes: [128, 128]
+    lr: 0.0005
+    gamma: 0.99
+    value_coef: 0.5
+    entropy_coef: 0.01
+    update_after: 5
+training:
+  total_episodes: 400
+  max_steps_per_episode: 500
+  seed: 42
+  eval_interval: 50
+  evaluation_episodes: 5
+  log_interval: 10
+  device: cpu

@@ -41,12 +41,15 @@ class RolloutBuffer:
     ) -> None:
         if len(self.rewards) >= self.capacity:
             raise ValueError("Rollout buffer capacity exceeded. Call `reset` before storing more data.")
-        self.observations.append(np.array(observation, copy=True))
-        self.next_observations.append(np.array(next_observation, copy=True))
+        observation_arr = np.asarray(observation, dtype=np.float32).reshape(self.observation_shape)
+        next_observation_arr = np.asarray(next_observation, dtype=np.float32).reshape(self.observation_shape)
+        self.observations.append(np.array(observation_arr, copy=True))
+        self.next_observations.append(np.array(next_observation_arr, copy=True))
         if self.discrete_action:
-            self.actions.append(np.array(action, copy=True))
+            action_arr = np.asarray(action, dtype=np.int64).reshape(self.action_shape)
         else:
-            self.actions.append(np.array(action, dtype=np.float32, copy=True))
+            action_arr = np.asarray(action, dtype=np.float32).reshape(self.action_shape)
+        self.actions.append(np.array(action_arr, copy=True))
         self.log_probs.append(float(log_prob))
         self.values.append(float(value))
         self.rewards.append(float(reward))
