@@ -1,0 +1,25 @@
+environment:
+  id: CartPole-v1
+  max_episode_steps: 500
+algorithm:
+  name: ppo
+  params:
+    hidden_sizes: [64, 64]
+    lr: 0.0003
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    entropy_coef: 0.01
+    value_coef: 0.5
+    rollout_length: 1024
+    update_epochs: 10
+    mini_batch_size: 64
+    max_grad_norm: 0.5
+training:
+  total_episodes: 300
+  max_steps_per_episode: 500
+  seed: 42
+  eval_interval: 50
+  evaluation_episodes: 5
+  log_interval: 10
+  device: cpu

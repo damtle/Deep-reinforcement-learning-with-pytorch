@@ -1,0 +1,28 @@
+environment:
+  id: Pendulum-v1
+  max_episode_steps: 200
+algorithm:
+  name: td3
+  params:
+    hidden_sizes: [400, 300]
+    actor_lr: 0.0001
+    critic_lr: 0.001
+    gamma: 0.99
+    tau: 0.005
+    buffer_size: 500000
+    batch_size: 256
+    policy_noise: 0.2
+    noise_clip: 0.5
+    policy_delay: 2
+    exploration_noise: 0.1
+    train_frequency: 1
+    gradient_steps: 1
+    startup_steps: 1000
+training:
+  total_episodes: 300
+  max_steps_per_episode: 200
+  seed: 42
+  eval_interval: 50
+  evaluation_episodes: 5
+  log_interval: 10
+  device: cpu
